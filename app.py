@@ -1,30 +1,33 @@
 from flask import Flask
 import threading
 import time
+from detection import get_data   # 👈 import your YOLO function
 
 app = Flask(__name__)
 
-# 🔴 Shared data (IMPORTANT)
 people_count = 0
 risk_level = "SAFE"
+
 
 def run_detection():
     global people_count, risk_level
 
     while True:
-        # Simulated values (replace later with real data)
-        people_count += 1
+        try:
+            people_count, risk_level = get_data()
 
-        if people_count <= 2:
-            risk_level = "SAFE"
-        elif people_count <= 5:
-            risk_level = "CAUTION"
-        else:
-            risk_level = "CRITICAL"
+            print("Updated:", people_count, risk_level)
 
-        print("Updated:", people_count, risk_level)
+        except Exception as e:
+            print("Error:", e)
 
-        time.sleep(2)
+        time.sleep(1)
+
+
+@app.route('/')
+def home():
+    return "Crowd-Pulse Backend Running 🚀"
+
 
 @app.route('/status')
 def status():
@@ -33,6 +36,7 @@ def status():
         "risk_level": risk_level
     }
 
+
 if __name__ == "__main__":
-    threading.Thread(target=run_detection).start()
+    threading.Thread(target=run_detection, daemon=True).start()
     app.run(debug=True)
